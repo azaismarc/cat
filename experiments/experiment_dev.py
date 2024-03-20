@@ -6,6 +6,7 @@ from cat.dataset import restaurants_train
 from reach import Reach
 from sklearn.metrics import precision_recall_fscore_support
 from collections import defaultdict, Counter
+import pprint
 
 
 GAMMA = .03
@@ -53,3 +54,5 @@ if __name__ == "__main__":
                                                    y_pred,
                                                    average="weighted")
         scores[idx] = (f1_score, f1_macro)
+
+    pprint.pprint(scores)

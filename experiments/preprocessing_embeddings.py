@@ -11,20 +11,35 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
 
-    paths = ["data/restaurant_train.conllu"]
-    create_noun_counts(paths,
-                       "data/nouns_restaurant.json")
-    conll2text(paths, "data/all_txt_restaurant.txt")
+    print("Creating noun counts and converting conll to text")
+
+    #paths = ["data/restaurant_train.conllu"]
+    #create_noun_counts(paths, "data/nouns_restaurant.json")
+    # conll2text(paths, "data/all_txt_restaurant.txt")
+
     corpus = [x.lower().strip().split()
               for x in open("data/all_txt_restaurant.txt")]
+    
+    print(f"Corpus size: {len(corpus)}")
 
-    f = Word2Vec(corpus,
-                 sg=0,
-                 negative=5,
-                 window=10,
-                 size=200,
-                 min_count=2,
-                 iter=5,
-                 workers=10)
+    print("Training word2vec model")
 
-    f.wv.save_word2vec_format(f"embeddings/restaurant_vecs_w2v.vec")
+    for sg in [0, 1]:
+
+        algo = "cbow" if sg == 0 else "sg"
+
+        print(f"Training {algo} model")
+
+        f = Word2Vec(corpus,
+                     sg=sg,
+                     negative=5,
+                     window=5,
+                     ns_exponent=1,
+                     vector_size=100,
+                     min_count=10,
+                     epochs=5,
+                     workers=15,
+                     seed=42)
+
+        f.wv.save_word2vec_format(f"embeddings/restaurant_vecs_w2v_{algo}.vec")
+

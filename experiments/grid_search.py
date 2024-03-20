@@ -5,7 +5,8 @@ import json
 
 from cat.simple import (get_scores,
                         attention,
-                        rbf_attention)
+                        rbf_attention,
+                        cosine_variance_attention)
 from cat.dataset import restaurants_train
 from reach import Reach
 from sklearn.metrics import precision_recall_fscore_support
@@ -18,7 +19,7 @@ if __name__ == "__main__":
 
     scores = defaultdict(dict)
 
-    r = Reach.load("embeddings/restaurant_vecs_w2v.vec",
+    r = Reach.load("embeddings/restaurant_vecs_w2v_cbow.vec",
                    unk_word="<UNK>")
 
     nouns = json.load(open("data/nouns_restaurant.json"))
@@ -31,12 +32,14 @@ if __name__ == "__main__":
     aspects, _ = zip(*c.most_common(1000))
     aspects = [[x] for x in aspects]
 
-    gamma = np.arange(.0, .1, .01)
+    gamma = np.arange(.01, .101, .01)
+    scalar = np.arange(1, 6, 1)
     attentions = [(-1, attention)]
+    attentions.extend(product(scalar, [cosine_variance_attention]))
     attentions.extend(product(gamma, [rbf_attention]))
     noun_cands = np.arange(10, 1000, 10)
 
-    fun2name = {attention: "att", rbf_attention: "rbf"}
+    fun2name = {attention: "att", rbf_attention: "rbf", cosine_variance_attention: "cosine"}
 
     pbar = tqdm(total=(len(attentions) *
                        len(noun_cands)))
@@ -45,6 +48,7 @@ if __name__ == "__main__":
     datas = list(restaurants_train())
 
     for g, att_func in attentions:
+        print(f"Running {fun2name[att_func]} with param {g}")
         if att_func == rbf_attention:
             r.vectors[r.items["<UNK>"]] += 10e5
         else:
@@ -82,4 +86,4 @@ if __name__ == "__main__":
                                    "p",
                                    "r",
                                    "f1"))
-    df.to_csv("results_grid_search.csv")
+    df.to_csv("results_grid_search_cbow.csv")
